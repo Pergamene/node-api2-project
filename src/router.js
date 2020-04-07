@@ -26,8 +26,14 @@ router.post('/', (req, res) => {
     res.status(400).json({ 'errorMessage': 'Please provide title and contents for the post.' });
   }
   db.insert(postData)
-    .then(post => {
-      res.status(201).json(post);
+    .then(id => {
+      db.findById(id)
+        .then(post => {
+          res.status(201).json(post);
+        })
+        .catch(() => {
+          res.status(500).json({ 'error': 'There was an error reading the new post.' });
+        });
     })
     .catch(() => {
       res.status(500).json({ 'error': 'There was an error while saving the post to the database.' });
@@ -81,12 +87,13 @@ router.post('/:id/comments', (req, res) => {
  *    return { error: 'The posts information could not be retrieved.' }
  */
 router.get('/', (req, res) => {
-  try {
-    const posts = db.find();
-    res.status(200).json(posts);
-  } catch {
-    res.status(500).json({ 'error': 'The posts information could not be retrieved.' });
-  }
+  db.find()
+    .then(posts => {
+      res.status(200).json(posts);
+    })
+    .catch(() => {
+      res.status(500).json({ 'error': 'The posts information could not be retrieved.' });
+    });
 });
 
 /**
@@ -125,7 +132,7 @@ router.get('/:id', (req, res) => {
  */
 router.get('/:id/comments', (req, res) => {
   try {
-    db.findCommentById(req.params.id)
+    db.findPostComments(req.params.id)
       .then(comments => {
         res.status(200).json(comments);
       })
@@ -182,21 +189,25 @@ router.delete('/:id', (req, res) => {
  *    return new `post`
  */
 router.put('/:id', (req, res) => {
-  try {
-    const postData = req.body;
-    if (!postData.body || !postData.contents) {
-      res.status(400).json({ 'errorMessage': 'Please provide title and tontents for the post.' });
-    }
-    db.update(req.params.id, postData)
-      .then(post => {
-        res.status(200).json(post);
-      })
-      .catch(() => {
+  const newPost = req.body;
+
+  db.update(req.params.id, newPost)
+    .then(count => {
+      if (count) {
+        db.findById(req.params.id)
+          .then(post => {
+            res.status(200).json(post);
+          })
+          .catch(() => {
+            res.status(500).json({ 'error': 'There was a problem reading the updated post' });
+          })
+      } else {
         res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
-      });
-  } catch {
-    res.status(500).json({ 'error': 'The post information could not be modified.' });
-  }
+      }
+    })
+    .catch(() => {
+      res.status(500).json({ 'error': 'The post information could not be modified.' });
+    });
 });
 
 module.exports = router;
