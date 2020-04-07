@@ -66,23 +66,27 @@ router.post('/:id/comments', (req, res) => {
     res.status(400).json({ 'errorMessage': 'Please provide text for the comment.' });
   }
   db.findById(req.params.id)
-    .then(() => {
-      db.insertComment(commentData)
-        .then(commentId => {
-          db.findCommentById(commentId.id)
-            .then(comment => {
-              res.status(201).json(comment);
-            })
-            .catch(() => {
-              res.status(500).json({ 'error': 'There was an error reading the new comment.' });
-            });
-        })
-        .catch(() => {
-          res.status(500).json({ 'error': 'There was an error while saving the comment to the database.' });
-        });
+    .then(post => {
+      if(post.length) {
+        db.insertComment(commentData)
+          .then(commentId => {
+            db.findCommentById(commentId.id)
+              .then(comment => {
+                res.status(201).json(comment);
+              })
+              .catch(() => {
+                res.status(500).json({ 'error': 'There was an error reading the new comment.' });
+              });
+          })
+          .catch(() => {
+            res.status(500).json({ 'error': 'There was an error while saving the comment to the database.' });
+          });
+      } else {
+        res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
+      }
     })
     .catch(() => {
-      res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
+      res.status(500).json({ 'error': 'There was an error with the server.' });
     });
 });
 
@@ -113,17 +117,17 @@ router.get('/', (req, res) => {
  *    return { error: 'The post information could not be retrieved.' }
  */
 router.get('/:id', (req, res) => {
-  try {
-    db.findById(req.params.id)
-      .then(post => {
+  db.findById(req.params.id)
+    .then(post => {
+      if (post.length) {
         res.status(200).json(post);
-      })
-      .catch(() => {
+      } else {
         res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
-      });
-  } catch {
-    res.status(500).json({ 'error': 'The post information could not be retrieved.' });
-  }
+      }
+    })
+    .catch(() => {
+      res.status(500).json({ 'error': 'The post information could not be retrieved.' });
+    });
 });
 
 /**
@@ -137,17 +141,17 @@ router.get('/:id', (req, res) => {
  *    return { error: 'The comments information could not be retrieved.' }
  */
 router.get('/:id/comments', (req, res) => {
-  try {
-    db.findPostComments(req.params.id)
-      .then(comments => {
+  db.findPostComments(req.params.id)
+    .then(comments => {
+      if (comments.length) {
         res.status(200).json(comments);
-      })
-      .catch(() => {
+      } else {
         res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
-      });
-  } catch {
-    res.status(500).json({ 'error': 'The comments information could not be retrieved.' });
-  }
+      }
+    })
+    .catch(() => {
+      res.status(500).json({ 'error': 'The comments information could not be retrieved.' });
+    });
 });
 
 /**
@@ -161,17 +165,17 @@ router.get('/:id/comments', (req, res) => {
  *    return { error: 'The post could not be removed.' }
  */
 router.delete('/:id', (req, res) => {
-    db.remove(req.params.id)
-      .then(count => {
-        if (count) {
-          res.status(200).json({ 'message': 'Post deleted.' });
-        } else {
-          res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
-        }
-      })
-      .catch(() => {
-        res.status(500).json({ 'error': 'The post could not be removed.' });
-      });
+  db.remove(req.params.id)
+    .then(count => {
+      if (count) {
+        res.status(200).json({ 'message': 'Post deleted.' });
+      } else {
+        res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
+      }
+    })
+    .catch(() => {
+      res.status(500).json({ 'error': 'The post could not be removed.' });
+    });
 });
 
 /**
