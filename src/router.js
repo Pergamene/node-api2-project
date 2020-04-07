@@ -27,7 +27,7 @@ router.post('/', (req, res) => {
   }
   db.insert(postData)
     .then(id => {
-      db.findById(id)
+      db.findById(id.id)
         .then(post => {
           res.status(201).json(post);
         })
@@ -68,8 +68,14 @@ router.post('/:id/comments', (req, res) => {
   db.findById(req.params.id)
     .then(() => {
       db.insertComment(commentData)
-        .then(comment => {
-          res.status(201).json(comment);
+        .then(commentId => {
+          db.findCommentById(commentId.id)
+            .then(comment => {
+              res.status(201).json(comment);
+            })
+            .catch(() => {
+              res.status(500).json({ 'error': 'There was an error reading the new comment.' });
+            });
         })
         .catch(() => {
           res.status(500).json({ 'error': 'There was an error while saving the comment to the database.' });
