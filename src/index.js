@@ -8,5 +8,4 @@ server.use(express.json());
 
 server.use('/api/posts', postsRouter);
 
-const port = 4000;
-server.listen(port, () => console.log(`\n== api on port ${port} ==\n`));
+server.listen(4000, () => console.log(`\n== Server running on http://localhost:4000 ==\n`));
