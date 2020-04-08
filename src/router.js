@@ -165,16 +165,18 @@ router.get('/:id/comments', (req, res) => {
  *    return { error: 'The post could not be removed.' }
  */
 router.delete('/:id', (req, res) => {
-  db.remove(req.params.id)
-    .then(count => {
-      if (count) {
-        res.status(200).json({ 'message': 'Post deleted.' });
-      } else {
-        res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
-      }
+  db.findById(req.params.id)
+    .then(post => {
+      db.remove(req.params.id)
+        .then(() => {
+          res.status(200).json(post);
+        })
+        .catch(() => {
+          res.status(500).json({ 'error': 'The post could not be removed.' });
+        });
     })
     .catch(() => {
-      res.status(500).json({ 'error': 'The post could not be removed.' });
+      res.status(404).json({ 'message': 'The post with the specified ID does not exist.' });
     });
 });
 
